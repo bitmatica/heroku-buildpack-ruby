@@ -560,7 +560,7 @@ WARNING
         bundle_without = env("BUNDLE_WITHOUT") || "development:test"
         bundle_bin     = "bundle"
         bundle_command = "#{bundle_bin} install --without #{bundle_without} --path vendor/bundle --binstubs #{bundler_binstubs_path}"
-        bundle_command = 'GIT_SSH="$HOME/.ssh/shim"' + bundle_command if env('SSH_KEY')
+        bundle_command = 'GIT_SSH="$HOME/.ssh/shim" ' + bundle_command if env('SSH_KEY')
         bundle_command << " -j4"
 
         if bundler.windows_gemfile_lock?
