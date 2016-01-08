@@ -91,6 +91,7 @@ WARNING
       new_app?
       Dir.chdir(build_path)
       remove_vendor_bundle
+      write_ssh_key
       install_ruby
       install_jvm
       setup_language_pack_environment
@@ -515,6 +516,22 @@ ERROR
       end
     end
   end
+  
+  def write_ssh_key
+    return unless key = env('SSH_KEY')
+
+    FileUtils.mkdir_p File.expand_path('~/.ssh')
+    File.open(File.expand_path('~/.ssh/id_rsa'), 'w') do |f|
+      f.write key
+    end
+    File.open(File.expand_path('~/.ssh/shim'), 'w') do |f|
+      f.write <<EOF
+#!/bin/sh
+exec /usr/bin/ssh -o StrictHostKeyChecking=no -i "$HOME/.ssh/id_rsa" "$@"
+EOF
+      f.chmod 0700
+    end
+  end
 
   # remove `vendor/bundle` that comes from the git repo
   # in case there are native ext.
@@ -543,6 +560,7 @@ WARNING
         bundle_without = env("BUNDLE_WITHOUT") || "development:test"
         bundle_bin     = "bundle"
         bundle_command = "#{bundle_bin} install --without #{bundle_without} --path vendor/bundle --binstubs #{bundler_binstubs_path}"
+        bundle_command = 'GIT_SSH="$HOME/.ssh/shim"' + bundle_command if env('SSH_KEY')
         bundle_command << " -j4"
 
         if bundler.windows_gemfile_lock?
